@@ -2,10 +2,10 @@
   "id": "TransparentTheSpire",
   "name": "Transparent The Spire",
   "author": "Indi",
-  "description": "[color:red]This mod requires extra configuration!!![/color] Put the [code]override.cfg[/code] in the game's directory.",
+  "description": "[red]This mod requires an extra installation step!!![/red] Put the provided override.cfg file in the same directory as the game's executable. It's fine to leave the file there when not playing with this mod, but it may result in slightly worse performance.",
   "version": "v0.0.0",
   "has_pck": true,
   "has_dll": true,
-  "dependencies": [],
+  "dependencies": ["BaseLib"],
   "affects_gameplay": false
 }

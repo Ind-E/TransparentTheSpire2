@@ -1,3 +1,4 @@
+using BaseLib.Config;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Modding;
@@ -15,12 +16,11 @@ public partial class MainFile : Node
 
     public static void Initialize()
     {
+        ModConfigRegistry.Register(ModId, new Config());
+
         Harmony harmony = new(ModId);
 
         harmony.PatchAll();
-
-        ProjectSettings.SetSetting("window/per_pixel_transparency/allowed", true);
-        ProjectSettings.SetSetting("window/size/transparent", true);
 
         if (Engine.GetMainLoop() is SceneTree tree)
         {
@@ -38,53 +38,101 @@ public partial class MainFile : Node
 
     private static void ProcessNode(Control control)
     {
-        switch (control.Name)
+        if (!Config.SuperTransparentMode)
         {
-            case "OvergrowthBackground":
-            case "OvergrowthBossBackground":
-            case "KaiserCrabBossBackground":
-                control.GetNode<Control>("Layer_01").Visible = false;
-                control.GetNode<Control>("Layer_02").Visible = false;
-                control.GetNode<Control>("Layer_03").Visible = false;
+            switch (control.Name)
+            {
+                case "OvergrowthBackground":
+                case "OvergrowthBossBackground":
+                case "KaiserCrabBossBackground":
+                    control.GetNode<Control>("Layer_01").Visible = false;
+                    control.GetNode<Control>("Layer_02").Visible = false;
+                    control.GetNode<Control>("Layer_03").Visible = false;
 
-                // Vantom
-                if (control.GetNodeOrNull<ColorRect>("oil shader") is not null)
-                {
-                    control.GetNode<Control>("Layer_00").Visible = false;
-                    control.GetNode<Control>("Layer_01").Visible = true;
-                }
-                break;
-            case "UnderdocksBackground":
-            case "CeremonialBeastBackground":
-                control.GetNode<Control>("Layer_00").Visible = false;
-                control.GetNode<Control>("Layer_01").Visible = false;
-                control.GetNode<Control>("Layer_02").Visible = false;
-                control.GetNode<Control>("Layer_03").Visible = false;
-                break;
-            case "HiveBackground":
-            case "KnowledgeDemonBackground":
-                control.GetNode<Control>("Layer_01").Visible = false;
-                control.GetNode<Control>("Layer_02").Visible = false;
-                break;
-            case "TheInsatiableBackground":
-                control.GetNode<Control>("Layer_00").Visible = false;
-                control.GetNode<Control>("Layer_01").Visible = false;
-                control.GetNode<Control>("Layer_02").Visible = false;
-                break;
-            case "GloryBackground":
-            case "TestSubjectBackground":
-                control.GetNode<Control>("Layer_01").Visible = false;
-                control.GetNode<Control>("Layer_02").Visible = false;
-                break;
-            case "MainMenu":
-                if (control is not NMainMenu mainMenu)
+                    // Vantom
+                    if (control.GetNodeOrNull<ColorRect>("oil shader") is not null)
+                    {
+                        control.GetNode<Control>("Layer_00").Visible = false;
+                        control.GetNode<Control>("Layer_01").Visible = true;
+                    }
                     break;
-                mainMenu.DisableBackstopInstantly();
-                break;
-            case "MainMenuBg":
-                control.GetNode<CanvasItem>("BgContainer/Bg").Visible = false;
-                control.GetNode<CanvasItem>("%Logo/light_large").Visible = false;
-                break;
+                case "UnderdocksBackground":
+                case "CeremonialBeastBackground":
+                    control.GetNode<Control>("Layer_00").Visible = false;
+                    control.GetNode<Control>("Layer_01").Visible = false;
+                    control.GetNode<Control>("Layer_02").Visible = false;
+                    control.GetNode<Control>("Layer_03").Visible = false;
+                    break;
+                case "HiveBackground":
+                case "KnowledgeDemonBackground":
+                    control.GetNode<Control>("Layer_01").Visible = false;
+                    control.GetNode<Control>("Layer_02").Visible = false;
+                    break;
+                case "TheInsatiableBackground":
+                    control.GetNode<Control>("Layer_00").Visible = false;
+                    control.GetNode<Control>("Layer_01").Visible = false;
+                    control.GetNode<Control>("Layer_02").Visible = false;
+                    break;
+                case "GloryBackground":
+                case "TestSubjectBackground":
+                    control.GetNode<Control>("Layer_01").Visible = false;
+                    control.GetNode<Control>("Layer_02").Visible = false;
+                    break;
+                case "MainMenu":
+                    if (control is not NMainMenu mainMenu)
+                        break;
+                    mainMenu.DisableBackstopInstantly();
+                    break;
+                case "MainMenuBg":
+                    control.GetNode<CanvasItem>("BgContainer/Bg").Visible = false;
+                    control.GetNode<CanvasItem>("%Logo/light_large").Visible = false;
+                    break;
+            }
+        }
+        else
+        {
+            switch (control.Name)
+            {
+                case "TheInsatiableBackground":
+                    control.GetNode<Control>("Layer_00").Visible = false;
+                    control.GetNode<Control>("Layer_01").Visible = false;
+                    control.GetNode<Control>("Layer_02").Visible = false;
+                    break;
+
+                case "FakeMerchantBackground":
+                case "GloryBackground":
+                case "HiveBackground":
+                case "KnowledgeDemonBackground":
+                case "QueenBackground":
+                case "TestSubjectBackground":
+                    control.GetNode<Control>("Layer_00").Visible = false;
+                    control.GetNode<Control>("Layer_01").Visible = false;
+                    control.GetNode<Control>("Layer_02").Visible = false;
+                    control.GetNode<Control>("Layer_03").Visible = false;
+                    break;
+
+                case "CeremonialBeastBackground":
+                case "KaiserCrabBossBackground":
+                case "OvergrowthBackground":
+                case "OvergrowthBossBackground":
+                case "UnderdocksBackground":
+                    control.GetNode<Control>("Layer_00").Visible = false;
+                    control.GetNode<Control>("Layer_01").Visible = false;
+                    control.GetNode<Control>("Layer_02").Visible = false;
+                    control.GetNode<Control>("Layer_03").Visible = false;
+                    control.GetNode<Control>("Layer_04").Visible = false;
+                    break;
+
+                case "MainMenu":
+                    if (control is not NMainMenu mainMenu)
+                        break;
+                    mainMenu.DisableBackstopInstantly();
+                    break;
+                case "MainMenuBg":
+                    control.GetNode<CanvasItem>("BgContainer/Bg").Visible = false;
+                    control.GetNode<CanvasItem>("%Logo/light_large").Visible = false;
+                    break;
+            }
         }
     }
 
