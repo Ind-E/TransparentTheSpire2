@@ -5,7 +5,7 @@
 
 <img width="1881" height="1169" alt="image" src="https://github.com/user-attachments/assets/e42efcbc-d5fd-4675-9ce9-ff9f10d780e5" />
 </br>
-<img width="1881" height="1169" alt="image" src="https://github.com/user-attachments/assets/73190840-e673-45f6-856c-94640efdb0f0" />
+<img width="1340" height="836" alt="image" src="https://github.com/user-attachments/assets/54c7b6e3-2c2c-43a0-82d7-1a4d5f0297ae" />
 <br/>
 Makes most backgrounds in the game transparent.
 
