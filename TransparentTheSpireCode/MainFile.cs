@@ -11,8 +11,48 @@ public partial class MainFile : Node
 {
     public const string ModId = "TransparentTheSpire";
 
-    public static MegaCrit.Sts2.Core.Logging.Logger Logger { get; } =
-        new(ModId, MegaCrit.Sts2.Core.Logging.LogType.Generic);
+    private static readonly List<CanvasItem> TrackedNodes = [];
+
+    private static readonly List<StringName> BgGroupA =
+    [
+        "OvergrowthBackground",
+        "OvergrowthBossBackground",
+        "KaiserCrabBossBackground",
+    ];
+    private static readonly List<StringName> BgGroupB =
+    [
+        "UnderdocksBackground",
+        "CeremonialBeastBackground",
+    ];
+    private static readonly List<StringName> BgGroupC =
+    [
+        "HiveBackground",
+        "KnowledgeDemonBackground",
+        "GloryBackground",
+        "TestSubjectBackground",
+        "FakeMerchantBackground",
+        "QueenBackground",
+    ];
+
+    private static readonly List<StringName> NodeGroup = ["RestSiteBG", "RestSiteBG2"];
+
+    private static readonly StringName SnInsatiable = "TheInsatiableBackground";
+
+    private static readonly StringName SnMerchantRoom = "MerchantRoom";
+    private static readonly StringName SnMainMenu = "MainMenu";
+    private static readonly StringName SnMainMenuBg = "MainMenuBg";
+
+    private static readonly HashSet<StringName> RelevantNames =
+    [
+        .. BgGroupA,
+        .. BgGroupB,
+        .. BgGroupC,
+        .. NodeGroup,
+        SnInsatiable,
+        SnMainMenu,
+        SnMainMenuBg,
+        SnMerchantRoom,
+    ];
 
     public static void Initialize()
     {
@@ -26,113 +66,92 @@ public partial class MainFile : Node
         {
             tree.NodeAdded += OnNodeAdded;
         }
+
+        // prevent black boxes around light particles
+        // GD.Load<CanvasItemMaterial>(
+        //     "res://themes/canvas_item_material_additive_shared.tres"
+        // )?.LightMode = CanvasItemMaterial.LightModeEnum.LightOnly;
     }
 
     private static void OnNodeAdded(Node node)
     {
-        if (node is Control control)
+        if (node is not CanvasItem canvasItem || !RelevantNames.Contains(canvasItem.Name))
+            return;
+
+        canvasItem.OnReady(() =>
         {
-            control.OnReady(() => ProcessNode(control));
-        }
+            if (canvasItem is NMainMenu mainMenu && canvasItem.Name == SnMainMenu)
+            {
+                mainMenu.DisableBackstopInstantly();
+            }
+
+            if (IsInstanceValid(canvasItem) && !TrackedNodes.Contains(canvasItem))
+            {
+                TrackedNodes.Add(canvasItem);
+                canvasItem.TreeExited += () => TrackedNodes.Remove(canvasItem);
+            }
+            ApplyConfigToNode(canvasItem);
+        });
     }
 
-    private static void ProcessNode(Control control)
+    public static void ApplyConfigToAllNodes()
     {
-        if (!Config.SuperTransparentMode)
-        {
-            switch (control.Name)
-            {
-                case "OvergrowthBackground":
-                case "OvergrowthBossBackground":
-                case "KaiserCrabBossBackground":
-                    control.GetNode<Control>("Layer_01").Visible = false;
-                    control.GetNode<Control>("Layer_02").Visible = false;
-                    control.GetNode<Control>("Layer_03").Visible = false;
+        TrackedNodes.RemoveAll(n => !IsInstanceValid(n));
+        foreach (var node in TrackedNodes)
+            ApplyConfigToNode(node);
+    }
 
-                    // Vantom
-                    if (control.GetNodeOrNull<ColorRect>("oil shader") is not null)
-                    {
-                        control.GetNode<Control>("Layer_00").Visible = false;
-                        control.GetNode<Control>("Layer_01").Visible = true;
-                    }
-                    break;
-                case "UnderdocksBackground":
-                case "CeremonialBeastBackground":
-                    control.GetNode<Control>("Layer_00").Visible = false;
-                    control.GetNode<Control>("Layer_01").Visible = false;
-                    control.GetNode<Control>("Layer_02").Visible = false;
-                    control.GetNode<Control>("Layer_03").Visible = false;
-                    break;
-                case "HiveBackground":
-                case "KnowledgeDemonBackground":
-                    control.GetNode<Control>("Layer_01").Visible = false;
-                    control.GetNode<Control>("Layer_02").Visible = false;
-                    break;
-                case "TheInsatiableBackground":
-                    control.GetNode<Control>("Layer_00").Visible = false;
-                    control.GetNode<Control>("Layer_01").Visible = false;
-                    control.GetNode<Control>("Layer_02").Visible = false;
-                    break;
-                case "GloryBackground":
-                case "TestSubjectBackground":
-                    control.GetNode<Control>("Layer_01").Visible = false;
-                    control.GetNode<Control>("Layer_02").Visible = false;
-                    break;
-                case "MainMenu":
-                    if (control is not NMainMenu mainMenu)
-                        break;
-                    mainMenu.DisableBackstopInstantly();
-                    break;
-                case "MainMenuBg":
-                    control.GetNode<CanvasItem>("BgContainer/Bg").Visible = false;
-                    control.GetNode<CanvasItem>("%Logo/light_large").Visible = false;
-                    break;
-            }
+    private static void ApplyConfigToNode(CanvasItem canvasItem)
+    {
+        bool super = Config.SuperTransparentMode;
+        StringName name = canvasItem.Name;
+
+        void SetLayerVisible(string name, bool visible)
+        {
+            canvasItem.GetNodeOrNull<CanvasItem>(name)?.Visible = visible;
         }
-        else
+
+        if (BgGroupA.Contains(name))
         {
-            switch (control.Name)
-            {
-                case "TheInsatiableBackground":
-                    control.GetNode<Control>("Layer_00").Visible = false;
-                    control.GetNode<Control>("Layer_01").Visible = false;
-                    control.GetNode<Control>("Layer_02").Visible = false;
-                    break;
-
-                case "FakeMerchantBackground":
-                case "GloryBackground":
-                case "HiveBackground":
-                case "KnowledgeDemonBackground":
-                case "QueenBackground":
-                case "TestSubjectBackground":
-                    control.GetNode<Control>("Layer_00").Visible = false;
-                    control.GetNode<Control>("Layer_01").Visible = false;
-                    control.GetNode<Control>("Layer_02").Visible = false;
-                    control.GetNode<Control>("Layer_03").Visible = false;
-                    break;
-
-                case "CeremonialBeastBackground":
-                case "KaiserCrabBossBackground":
-                case "OvergrowthBackground":
-                case "OvergrowthBossBackground":
-                case "UnderdocksBackground":
-                    control.GetNode<Control>("Layer_00").Visible = false;
-                    control.GetNode<Control>("Layer_01").Visible = false;
-                    control.GetNode<Control>("Layer_02").Visible = false;
-                    control.GetNode<Control>("Layer_03").Visible = false;
-                    control.GetNode<Control>("Layer_04").Visible = false;
-                    break;
-
-                case "MainMenu":
-                    if (control is not NMainMenu mainMenu)
-                        break;
-                    mainMenu.DisableBackstopInstantly();
-                    break;
-                case "MainMenuBg":
-                    control.GetNode<CanvasItem>("BgContainer/Bg").Visible = false;
-                    control.GetNode<CanvasItem>("%Logo/light_large").Visible = false;
-                    break;
-            }
+            bool isVantom = canvasItem.GetNodeOrNull<ColorRect>("oil shader") != null;
+            SetLayerVisible("Layer_00", !super && !isVantom);
+            SetLayerVisible("Layer_01", !super && isVantom);
+            SetLayerVisible("Layer_02", false);
+            SetLayerVisible("Layer_03", false);
+            SetLayerVisible("Layer_04", !super);
+        }
+        else if (BgGroupB.Contains(name))
+        {
+            SetLayerVisible("Layer_00", !super);
+            SetLayerVisible("Layer_01", false);
+            SetLayerVisible("Layer_02", false);
+            SetLayerVisible("Layer_03", false);
+            SetLayerVisible("Layer_04", !super);
+        }
+        else if (BgGroupC.Contains(name))
+        {
+            SetLayerVisible("Layer_00", !super);
+            SetLayerVisible("Layer_01", false);
+            SetLayerVisible("Layer_02", false);
+            SetLayerVisible("Layer_03", !super);
+        }
+        else if (NodeGroup.Contains(name))
+        {
+            canvasItem.Visible = false;
+        }
+        else if (name == SnInsatiable)
+        {
+            SetLayerVisible("Layer_00", false);
+            SetLayerVisible("Layer_01", false);
+            SetLayerVisible("Layer_02", false);
+        }
+        else if (name == SnMainMenuBg)
+        {
+            SetLayerVisible("BgContainer/Bg", false);
+        }
+        else if (name == SnMerchantRoom)
+        {
+            SetLayerVisible("SceneContainer/BgContainer/SpineSprite", !super);
         }
     }
 
