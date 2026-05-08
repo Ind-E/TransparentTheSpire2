@@ -8,8 +8,15 @@
 <img width="1340" height="836" alt="image" src="https://github.com/user-attachments/assets/54c7b6e3-2c2c-43a0-82d7-1a4d5f0297ae" />
 <br/>
 Makes most backgrounds in the game transparent.
+<br/>
+<br/>
 
-Tested on windows, wayland, and xwayland.
+> [!NOTE]
+> On MacOS and Wayland, this mod will not work in fullscreen. The areas that should appear transparent will instead be solid black.
+> <details>
+> <summary>Technical Details</summary>
+> This is caused by a rendering optimization called direct scanout (Wayland) or direct-to-display (macOS). In either case, when the compositor detects that the game is running in fullscreen, it skips drawing any other windows and sends the game's image data directly to the screen hardware, reducing input latency and power consumption.
+> </details>
 
 ## Installation
 Copy the `override.cfg` file from the [latest release](https://github.com/Ind-E/TransparentTheSpire2/releases/latest) into the same folder as your Slay the Spire 2 executable (typically `Steam/steamapps/common/Slay the Spire 2/`)
