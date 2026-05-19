@@ -13,18 +13,18 @@ public partial class MainFile : Node
 
     private static readonly List<CanvasItem> TrackedNodes = [];
 
-    private static readonly List<StringName> BgGroupA =
+    private static readonly StringName[] BgGroupA =
     [
         "OvergrowthBackground",
         "OvergrowthBossBackground",
         "KaiserCrabBossBackground",
     ];
-    private static readonly List<StringName> BgGroupB =
+    private static readonly StringName[] BgGroupB =
     [
         "UnderdocksBackground",
         "CeremonialBeastBackground",
     ];
-    private static readonly List<StringName> BgGroupC =
+    private static readonly StringName[] BgGroupC =
     [
         "HiveBackground",
         "KnowledgeDemonBackground",
@@ -34,7 +34,13 @@ public partial class MainFile : Node
         "QueenBackground",
     ];
 
-    private static readonly List<StringName> NodeGroup = ["RestSiteBG", "RestSiteBG2"];
+    private static readonly StringName[] AlwaysHidden =
+    [
+        "RestSiteBG",
+        "RestSiteBG2",
+        "RestSiteGroundLighting",
+        "RestSiteGroundLighting2",
+    ];
 
     private static readonly StringName SnInsatiable = "TheInsatiableBackground";
 
@@ -47,11 +53,53 @@ public partial class MainFile : Node
         .. BgGroupA,
         .. BgGroupB,
         .. BgGroupC,
-        .. NodeGroup,
+        .. AlwaysHidden,
         SnInsatiable,
         SnMainMenu,
         SnMainMenuBg,
         SnMerchantRoom,
+    ];
+
+    private static readonly ShaderMaterial IntenseLightFixMaterial = new()
+    {
+        Shader = GD.Load<Shader>("res://TransparentTheSpire/shaders/light_fix.gdshader"),
+    };
+
+    private static readonly ShaderMaterial LightFixMaterial = InitIntenseLightFixMaterial();
+
+    private static ShaderMaterial InitIntenseLightFixMaterial()
+    {
+        var mat = new ShaderMaterial()
+        {
+            Shader = GD.Load<Shader>("res://TransparentTheSpire/shaders/light_fix.gdshader"),
+        };
+        mat.SetShaderParameter("brightness_boost", 0.75);
+        mat.SetShaderParameter("alpha_exp", 1.2);
+        return mat;
+    }
+
+    private static readonly StringName[] NeedsIntenseLightFix =
+    [
+        "fireflies",
+        "UncommonGlow",
+        "RareGlow",
+        "fire",
+        "fire2",
+        "fire3",
+        "Hammer",
+        "ImpactCircle",
+        "Sparks",
+        "EnergyParticles",
+    ];
+
+    private static readonly StringName[] NeedsLightFix =
+    [
+        "light_large",
+        "light_front",
+        "light_small",
+        "light_small2",
+        "light_small5",
+        "light_small6",
     ];
 
     public static void Initialize()
@@ -66,32 +114,47 @@ public partial class MainFile : Node
         {
             tree.NodeAdded += OnNodeAdded;
         }
-
-        // prevent black boxes around light particles
-        // GD.Load<CanvasItemMaterial>(
-        //     "res://themes/canvas_item_material_additive_shared.tres"
-        // )?.LightMode = CanvasItemMaterial.LightModeEnum.LightOnly;
     }
 
     private static void OnNodeAdded(Node node)
     {
-        if (node is not CanvasItem canvasItem || !RelevantNames.Contains(canvasItem.Name))
+        if (node is not CanvasItem canvasItem)
+            return;
+
+        canvasItem.OnReady(() => LightFix(canvasItem));
+
+        if (!RelevantNames.Contains(canvasItem.Name))
             return;
 
         canvasItem.OnReady(() =>
         {
+            if (!IsInstanceValid(canvasItem))
+                return;
             if (canvasItem is NMainMenu mainMenu && canvasItem.Name == SnMainMenu)
             {
                 mainMenu.DisableBackstopInstantly();
+                return;
             }
 
-            if (IsInstanceValid(canvasItem) && !TrackedNodes.Contains(canvasItem))
+            if (!TrackedNodes.Contains(canvasItem))
             {
                 TrackedNodes.Add(canvasItem);
                 canvasItem.TreeExited += () => TrackedNodes.Remove(canvasItem);
             }
             ApplyConfigToNode(canvasItem);
         });
+    }
+
+    public static void LightFix(CanvasItem canvasItem)
+    {
+        if (NeedsLightFix.Contains(canvasItem.Name))
+        {
+            canvasItem.Material = LightFixMaterial;
+        }
+        else if (NeedsIntenseLightFix.Contains(canvasItem.Name))
+        {
+            canvasItem.Material = IntenseLightFixMaterial;
+        }
     }
 
     public static void ApplyConfigToAllNodes()
@@ -135,7 +198,7 @@ public partial class MainFile : Node
             SetLayerVisible("Layer_02", false);
             SetLayerVisible("Layer_03", !super);
         }
-        else if (NodeGroup.Contains(name))
+        else if (AlwaysHidden.Contains(name))
         {
             canvasItem.Visible = false;
         }
